@@ -62,6 +62,46 @@ class AdminService:
             )
         )
 
+    @staticmethod
+    def get_dashboard_stats(current_user):
+
+        total_users = user_collection.count_documents({"role": {"$in": ["user", "manager"]}})
+        total_managers = user_collection.count_documents({"role": "manager"})
+        total_expenses = expense_collection.count_documents({})
+
+        total_amount = 0.0
+        pending_amount = 0.0
+        approved_amount = 0.0
+        rejected_amount = 0.0
+
+        for expense in expense_collection.find():
+            owner = user_collection.find_one(
+                {"_id": ObjectId(expense["user_id"])}
+            )
+
+            if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+                continue
+
+            amount = expense.get("amount", 0) or 0
+            total_amount += float(amount)
+
+            if expense.get("status") == "Pending":
+                pending_amount += float(amount)
+            elif expense.get("status") == "Approved":
+                approved_amount += float(amount)
+            elif expense.get("status") == "Rejected":
+                rejected_amount += float(amount)
+
+        return {
+            "total_users": total_users,
+            "total_managers": total_managers,
+            "total_expenses": total_expenses,
+            "total_amount": total_amount,
+            "pending_amount": pending_amount,
+            "approved_amount": approved_amount,
+            "rejected_amount": rejected_amount,
+        }
+
 
     @staticmethod
     def get_registration_requests():
