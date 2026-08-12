@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "./services/api";
 
-const UserTable = ({ admin = false, refreshFlag = 0 }) => {
+const UserTable = ({ admin = false, refreshFlag = 0, onAction }) => {
 
     const [users, setUsers] = useState([]);
 
@@ -100,6 +100,7 @@ const UserTable = ({ admin = false, refreshFlag = 0 }) => {
                                                                 try {
                                                                     await API.patch(`/admin/users/${user.id}/role`, { role: "manager" });
                                                                     fetchUsers();
+                                                                    onAction?.();
                                                                 } catch (error) {
                                                                     console.error("Error promoting employee", error);
                                                                 }
@@ -115,6 +116,7 @@ const UserTable = ({ admin = false, refreshFlag = 0 }) => {
                                                                 try {
                                                                     await API.patch(`/admin/users/${user.id}/role`, { role: "user" });
                                                                     fetchUsers();
+                                                                    onAction?.();
                                                                 } catch (error) {
                                                                     console.error("Error demoting manager", error);
                                                                 }
@@ -130,6 +132,7 @@ const UserTable = ({ admin = false, refreshFlag = 0 }) => {
                                                             try {
                                                                 await API.delete(`/admin/users/${user.id}`);
                                                                 fetchUsers();
+                                                                onAction?.();
                                                             } catch (error) {
                                                                 console.error("Error deleting employee", error);
                                                             }
