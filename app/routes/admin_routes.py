@@ -100,3 +100,9 @@ def approve_registration(id: str, current_user=Depends(admin_required)):
 def reject_registration(id: str, current_user=Depends(admin_required)):
 
     return AdminService.reject_registration_request(id)
+
+
+@router.get("/stats")
+def get_stats(current_user=Depends(admin_required)):
+
+    return AdminService.get_dashboard_stats(current_user)

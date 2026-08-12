@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "./services/api";
 
-const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, onDelete }) => {
+const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, onDelete, onAction }) => {
     const [expenses, setExpenses] = useState([]);
 
     const fetchExpenses = async () => {
@@ -25,6 +25,7 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
         try {
             await API.put(`/admin/expenses/${id}/approve`);
             fetchExpenses();
+            onAction?.();
         } catch (error) {
             console.error(error);
         }
@@ -34,6 +35,7 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
         try {
             await API.put(`/admin/expenses/${id}/reject`);
             fetchExpenses();
+            onAction?.();
         } catch (error) {
             console.error(error);
         }
@@ -48,6 +50,7 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
             await API.delete(endpoint);
             fetchExpenses();
             onDelete?.();
+            onAction?.();
         } catch (error) {
             console.error(error);
             alert("Failed to delete expense");
