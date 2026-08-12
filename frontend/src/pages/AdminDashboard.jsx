@@ -22,7 +22,7 @@ const AdminDashboard = () => {
                     <div>
                         <h2 className="text-3xl font-bold">Admin Dashboard</h2>
                         <p className="text-sm text-gray-600 mt-1">
-                            Manage users and review expense requests.
+                            Manage employees and review expense requests.
                         </p>
                     </div>
                     <button
@@ -30,13 +30,13 @@ const AdminDashboard = () => {
                         onClick={() => setShowAddUser(true)}
                         className="rounded-xl bg-[#193680] px-5 py-3 text-white font-semibold hover:bg-[#26479b]"
                     >
-                        Add User
+                        Add Employee
                     </button>
                 </div>
 
                 <div className="mb-8">
                     <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-xl font-semibold">Users</h3>
+                        <h3 className="text-xl font-semibold">Employees</h3>
                     </div>
 
                     {showAddUser && (

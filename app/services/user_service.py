@@ -30,7 +30,10 @@ class UserService:
         user_data = user.model_dump()
 
         user_data["password"] = hash_password(user.password)
-        user_data["role"] = "user"
+        user_data["role"] = user_data.get("role", "user")
+
+        if user_data["role"] not in ["user", "manager"]:
+            user_data["role"] = "user"
 
         result = user_collection.insert_one(user_data)
 

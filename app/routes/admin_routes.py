@@ -1,7 +1,7 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Body
 
 from app.services.admin_service import AdminService
-from app.utils.admin import admin_required
+from app.utils.admin import admin_required, approval_required
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -17,25 +17,55 @@ def delete_user(id: str, current_user=Depends(admin_required)):
     result = AdminService.delete_user(id)
 
     if not result:
-        raise HTTPException(status_code=404, detail="User not found")
+        raise HTTPException(status_code=404, detail="Employee not found")
+
+    return result
+
+@router.patch("/users/{id}/role")
+def update_user_role(
+    id: str,
+    role: str = Body(..., embed=True),
+    current_user=Depends(admin_required)
+):
+
+    result = AdminService.update_user_role(id, role)
+
+    if not result:
+        raise HTTPException(status_code=404, detail="Employee not found or invalid role")
 
     return result
 
 @router.get("/expenses")
-def get_expenses(current_user=Depends(admin_required)):
+def get_expenses(current_user=Depends(approval_required)):
 
-    return AdminService.get_all_expenses()
+    return AdminService.get_all_expenses(current_user)
 
 @router.put("/expenses/{id}/approve")
-def approve(id:str,current_user=Depends(admin_required)):
+def approve(id: str, current_user=Depends(approval_required)):
 
-    return AdminService.approve_expense(id)
+    result = AdminService.approve_expense(id, current_user)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    if result == "unauthorized":
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return result
 
 
 @router.put("/expenses/{id}/reject")
-def reject(id:str,current_user=Depends(admin_required)):
+def reject(id: str, current_user=Depends(approval_required)):
 
-    return AdminService.reject_expense(id)
+    result = AdminService.reject_expense(id, current_user)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Expense not found")
+
+    if result == "unauthorized":
+        raise HTTPException(status_code=403, detail="Access denied")
+
+    return result
 
 
 @router.delete("/expenses/{id}")

@@ -40,7 +40,27 @@ class AdminService:
         if result.deleted_count == 0:
             return None
 
-        return {"message": "User and related expenses deleted successfully"}
+        return {"message": "Employee and related expenses deleted successfully"}
+
+    @staticmethod
+    def update_user_role(id, role):
+
+        if role not in ["user", "manager"]:
+            return None
+
+        result = user_collection.update_one(
+            {"_id": ObjectId(id)},
+            {"$set": {"role": role}}
+        )
+
+        if result.matched_count == 0:
+            return None
+
+        return user_serializer(
+            user_collection.find_one(
+                {"_id": ObjectId(id)}
+            )
+        )
 
 
     @staticmethod
@@ -92,7 +112,7 @@ class AdminService:
         return {"message": "Registration request rejected"}
 
     @staticmethod
-    def get_all_expenses():
+    def get_all_expenses(current_user):
 
         expenses = []
 
@@ -102,16 +122,33 @@ class AdminService:
                 {"_id": ObjectId(expense["user_id"])}
             )
 
+            if current_user["role"] == "manager" and user and user.get("role") != "user":
+                continue
+
             expense_data = expense_serializer(expense)
-
             expense_data["user_name"] = user["name"] if user else "Unknown"
-
             expenses.append(expense_data)
 
         return expenses
 
     @staticmethod
-    def approve_expense(id):
+    def approve_expense(id, current_user):
+
+        expense = expense_collection.find_one(
+            {
+                "_id": ObjectId(id)
+            }
+        )
+
+        if not expense:
+            return None
+
+        owner = user_collection.find_one(
+            {"_id": ObjectId(expense["user_id"])}
+        )
+
+        if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+            return "unauthorized"
 
         expense_collection.update_one(
             {
@@ -147,7 +184,23 @@ class AdminService:
         return {"message": "Expense deleted successfully"}
 
     @staticmethod
-    def reject_expense(id):
+    def reject_expense(id, current_user):
+
+        expense = expense_collection.find_one(
+            {
+                "_id": ObjectId(id)
+            }
+        )
+
+        if not expense:
+            return None
+
+        owner = user_collection.find_one(
+            {"_id": ObjectId(expense["user_id"])}
+        )
+
+        if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+            return "unauthorized"
 
         expense_collection.update_one(
             {
