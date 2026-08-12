@@ -27,7 +27,7 @@ def register(user: RegisterUser):
     if result == "already_exists":
         raise HTTPException(
             status_code=400,
-            detail="User already exists"
+            detail="Employee already exists"
         )
 
     if result == "request_exists":

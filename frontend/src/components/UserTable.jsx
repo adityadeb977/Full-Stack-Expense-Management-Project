@@ -86,24 +86,58 @@ const UserTable = ({ admin = false, refreshFlag = 0 }) => {
                                 {admin && (
                                     <>
                                         <td className="px-4 py-3">
-                                            {user.role}
+                                            {user.role === "user"
+                                                ? "Employee"
+                                                : user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
                                         </td>
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 flex flex-wrap gap-2">
                                             {!user.role || user.role !== "admin" ? (
-                                                <button
-                                                    className="rounded-xl bg-red-600 px-3 py-2 text-white hover:bg-red-700"
-                                                    onClick={async () => {
-                                                        if (!window.confirm(`Delete ${user.name}?`)) return;
-                                                        try {
-                                                            await API.delete(`/admin/users/${user.id}`);
-                                                            fetchUsers();
-                                                        } catch (error) {
-                                                            console.error("Error deleting user", error);
-                                                        }
-                                                    }}
-                                                >
-                                                    Delete
-                                                </button>
+                                                <>
+                                                    {user.role === "user" && (
+                                                        <button
+                                                            className="rounded-xl bg-blue-600 px-3 py-2 text-white hover:bg-blue-700"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await API.patch(`/admin/users/${user.id}/role`, { role: "manager" });
+                                                                    fetchUsers();
+                                                                } catch (error) {
+                                                                    console.error("Error promoting employee", error);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Promote
+                                                        </button>
+                                                    )}
+                                                    {user.role === "manager" && (
+                                                        <button
+                                                            className="rounded-xl bg-yellow-600 px-3 py-2 text-white hover:bg-yellow-700"
+                                                            onClick={async () => {
+                                                                try {
+                                                                    await API.patch(`/admin/users/${user.id}/role`, { role: "user" });
+                                                                    fetchUsers();
+                                                                } catch (error) {
+                                                                    console.error("Error demoting manager", error);
+                                                                }
+                                                            }}
+                                                        >
+                                                            Demote
+                                                        </button>
+                                                    )}
+                                                    <button
+                                                        className="rounded-xl bg-red-600 px-3 py-2 text-white hover:bg-red-700"
+                                                        onClick={async () => {
+                                                            if (!window.confirm(`Delete ${user.name}?`)) return;
+                                                            try {
+                                                                await API.delete(`/admin/users/${user.id}`);
+                                                                fetchUsers();
+                                                            } catch (error) {
+                                                                console.error("Error deleting employee", error);
+                                                            }
+                                                        }}
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </>
                                             ) : (
                                                 <span className="text-gray-500">—</span>
                                             )}
@@ -123,11 +157,9 @@ const UserTable = ({ admin = false, refreshFlag = 0 }) => {
                                 colSpan={admin ? 4 : 2}
                                 className="text-center py-4 text-gray-500"
                             >
-                                No users found
+                                No employees found
                             </td>
-
                         </tr>
-
                     )}
 
                 </tbody>

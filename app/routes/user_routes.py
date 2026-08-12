@@ -9,7 +9,7 @@ def create(user: CreateUser):
     result = UserService.create_user(user)
 
     if not result:
-        raise HTTPException(status_code=400, detail="User already exists")
+        raise HTTPException(status_code=400, detail="Employee already exists")
 
     return result
 
@@ -22,6 +22,6 @@ def get_one(id:str):
     user=UserService.get_user(id)
 
     if not user:
-        raise HTTPException(status_code=404,detail="User not found")
+        raise HTTPException(status_code=404,detail="Employee not found")
 
     return user

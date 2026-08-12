@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import API from "./services/api";
 
-const ExpenseTable = ({ admin = false, refreshFlag, onEdit, onDelete }) => {
+const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, onDelete }) => {
     const [expenses, setExpenses] = useState([]);
 
     const fetchExpenses = async () => {
         try {
-            const endpoint = admin
+            const endpoint = admin || approver
                 ? "/admin/expenses"
                 : "/expenses";
 
@@ -68,7 +68,7 @@ const ExpenseTable = ({ admin = false, refreshFlag, onEdit, onDelete }) => {
                         <th className="px-4 py-3 text-left">Amount</th>
                         <th className="px-4 py-3 text-left">Category</th>
 
-                        {admin && (
+                        {(admin || approver) && (
                             <th className="px-4 py-3 text-left">
                                 Submitted By
                             </th>
@@ -101,7 +101,7 @@ const ExpenseTable = ({ admin = false, refreshFlag, onEdit, onDelete }) => {
                                     {expense.category}
                                 </td>
 
-                                {admin && (
+                                {(admin || approver) && (
                                     <td className="px-4 py-3">
                                         {expense.user_name}
                                     </td>
@@ -122,7 +122,7 @@ const ExpenseTable = ({ admin = false, refreshFlag, onEdit, onDelete }) => {
                                 </td>
 
                                 <td className="px-4 py-3 flex gap-2 justify-center">
-                                    {admin ? (
+                                    {admin || approver ? (
                                         <>
                                             {expense.status === "Pending" ? (
                                                 <>
@@ -150,12 +150,14 @@ const ExpenseTable = ({ admin = false, refreshFlag, onEdit, onDelete }) => {
                                                 </span>
                                             )}
 
-                                            <button
-                                                onClick={() => deleteExpense(expense.id)}
-                                                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
-                                            >
-                                                Delete
-                                            </button>
+                                            {admin && (
+                                                <button
+                                                    onClick={() => deleteExpense(expense.id)}
+                                                    className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+                                                >
+                                                    Delete
+                                                </button>
+                                            )}
                                         </>
                                     ) : (
                                         expense.status === "Pending" ? (

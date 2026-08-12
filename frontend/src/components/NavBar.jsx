@@ -8,6 +8,7 @@ const NavBar = () => {
     const name = localStorage.getItem("name");
 
     const role = localStorage.getItem("role");
+    const displayRole = role === "user" ? "Employee" : role?.charAt(0).toUpperCase() + role?.slice(1);
 
     const handleLogout = () => {
 
@@ -36,7 +37,7 @@ const NavBar = () => {
                 <div className="flex items-center gap-4">
 
                     <span className="bg-white text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
-                        {role.toUpperCase()}
+                        {displayRole}
                     </span>
 
                     <button
