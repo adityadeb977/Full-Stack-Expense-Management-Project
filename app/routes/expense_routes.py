@@ -1,10 +1,13 @@
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Depends, Query
+from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File
+from fastapi.responses import FileResponse
 
 from app.models.expense import Expense
 from app.services.expense_service import ExpenseService
 from app.utils.dependencies import get_current_user
+from app.utils.receipt_storage import save_receipt, receipt_path, remove_receipt
+from app.services.receipt_ocr import extract_receipt_details
 
 router = APIRouter()
 
@@ -123,3 +126,45 @@ def delete(
         )
 
     return result
+
+
+@router.post("/expenses/{id}/receipt")
+async def upload_receipt(id: str, file: UploadFile = File(...), current_user=Depends(get_current_user)):
+    receipt = await save_receipt(file)
+    result = ExpenseService.attach_receipt(id, receipt, current_user)
+    if result is None:
+        remove_receipt(receipt)
+        raise HTTPException(404, "Expense not found")
+    if result == "unauthorized":
+        remove_receipt(receipt)
+        raise HTTPException(403, "Access denied")
+    if result == "cannot_edit":
+        remove_receipt(receipt)
+        raise HTTPException(400, "Only pending expenses can be updated")
+    return result
+
+
+@router.get("/expenses/{id}/receipt")
+def download_receipt(id: str, current_user=Depends(get_current_user)):
+    expense = ExpenseService.get_expense_by_id(id, current_user)
+    if expense is None:
+        raise HTTPException(404, "Expense not found")
+    if expense == "unauthorized":
+        raise HTTPException(403, "Access denied")
+    path = receipt_path(expense.get("receipt"))
+    if not path or not path.is_file():
+        raise HTTPException(404, "Receipt not found")
+    return FileResponse(path, media_type=expense["receipt"]["content_type"], filename=expense["receipt"]["file_name"])
+
+
+@router.get("/expenses/{id}/receipt/ocr")
+def ocr_receipt(id: str, current_user=Depends(get_current_user)):
+    expense = ExpenseService.get_expense_by_id(id, current_user)
+    if expense is None:
+        raise HTTPException(404, "Expense not found")
+    if expense == "unauthorized":
+        raise HTTPException(403, "Access denied")
+    path = receipt_path(expense.get("receipt"))
+    if not path or not path.is_file():
+        raise HTTPException(404, "Receipt not found")
+    return extract_receipt_details(path, expense["receipt"]["content_type"])

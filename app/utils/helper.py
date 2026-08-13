@@ -33,4 +33,9 @@ def expense_serializer(expense):
         "user_id": expense["user_id"],
         "status": expense["status"],
         "created_at": created_at,
+        "receipt": expense.get("receipt"),
+        "approval_note": expense.get("approval_note"),
+        "reviewed_at": expense.get("reviewed_at").isoformat()
+        if expense.get("reviewed_at") and hasattr(expense.get("reviewed_at"), "isoformat")
+        else expense.get("reviewed_at"),
     }
