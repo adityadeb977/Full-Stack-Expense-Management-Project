@@ -1,4 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from typing import Optional
+
+from fastapi import APIRouter, HTTPException, Depends, Query
 
 from app.models.expense import Expense
 from app.services.expense_service import ExpenseService
@@ -13,8 +15,28 @@ def create(expense: Expense, current_user=Depends(get_current_user)):
 
 
 @router.get("/expenses")
-def get_expenses(current_user=Depends(get_current_user)):
-    return ExpenseService.get_all_expenses(current_user)
+def get_expenses(
+    current_user=Depends(get_current_user),
+    category: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    min_amount: Optional[float] = Query(None),
+    max_amount: Optional[float] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+):
+    return ExpenseService.get_all_expenses(
+        current_user,
+        category=category,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/expenses/{id}")

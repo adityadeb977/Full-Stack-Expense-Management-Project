@@ -6,6 +6,7 @@ from app.database.connection import (
     registration_request_collection
 )
 
+from app.utils.expense_filters import build_expense_query, enrich_expense_with_user
 from app.utils.helper import (
     user_serializer,
     registration_request_serializer,
@@ -152,24 +153,51 @@ class AdminService:
         return {"message": "Registration request rejected"}
 
     @staticmethod
-    def get_all_expenses(current_user):
+    def get_all_expenses(
+        current_user,
+        *,
+        user_id=None,
+        search=None,
+        category=None,
+        status=None,
+        date_from=None,
+        date_to=None,
+        min_amount=None,
+        max_amount=None,
+        page=1,
+        page_size=10,
+    ):
+        query = build_expense_query(
+            current_user,
+            user_id=user_id,
+            search=search,
+            category=category,
+            status=status,
+            date_from=date_from,
+            date_to=date_to,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            admin_list=True,
+        )
+
+        skip = (page - 1) * page_size
+        total = expense_collection.count_documents(query)
 
         expenses = []
+        for expense in (
+            expense_collection.find(query)
+            .sort("created_at", -1)
+            .skip(skip)
+            .limit(page_size)
+        ):
+            expenses.append(enrich_expense_with_user(expense, include_user_name=True))
 
-        for expense in expense_collection.find():
-
-            user = user_collection.find_one(
-                {"_id": ObjectId(expense["user_id"])}
-            )
-
-            if current_user["role"] == "manager" and user and user.get("role") != "user":
-                continue
-
-            expense_data = expense_serializer(expense)
-            expense_data["user_name"] = user["name"] if user else "Unknown"
-            expenses.append(expense_data)
-
-        return expenses
+        return {
+            "items": expenses,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     @staticmethod
     def approve_expense(id, current_user):
