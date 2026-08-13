@@ -1,8 +1,9 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import API from "./services/api";
 
 const ExpenseForm = ({ selectedExpense, onUpdated, onCancel }) => {
+    const [receiptFile, setReceiptFile] = useState(null);
 
     const {
         register,
@@ -21,21 +22,32 @@ const ExpenseForm = ({ selectedExpense, onUpdated, onCancel }) => {
         } else {
             reset({ title: "", amount: "", category: "" });
         }
+        setReceiptFile(null);
     }, [selectedExpense, reset]);
 
     const onSubmit = async (data) => {
 
         try {
+            let savedExpense;
             if (selectedExpense) {
-                await API.put(`/expenses/${selectedExpense.id}`, data);
+                const response = await API.put(`/expenses/${selectedExpense.id}`, data);
+                savedExpense = response.data;
                 alert("Expense updated successfully");
                 onCancel?.();
             } else {
-                await API.post("/expenses", data);
+                const response = await API.post("/expenses", data);
+                savedExpense = response.data;
                 alert("Expense added successfully");
             }
 
+            if (receiptFile) {
+                const formData = new FormData();
+                formData.append("file", receiptFile);
+                await API.post(`/expenses/${savedExpense.id}/receipt`, formData);
+            }
+
             reset({ title: "", amount: "", category: "" });
+            setReceiptFile(null);
             onUpdated?.();
         } catch (error) {
 
@@ -110,6 +122,21 @@ const ExpenseForm = ({ selectedExpense, onUpdated, onCancel }) => {
                         {errors.category.message}
                     </p>
                 )}
+
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Receipt (JPEG, PNG, or PDF; max 10 MB)
+                    </label>
+                    <input
+                        type="file"
+                        accept="image/jpeg,image/png,application/pdf"
+                        onChange={(event) => setReceiptFile(event.target.files?.[0] || null)}
+                        className="w-full border rounded-lg px-4 py-2 text-sm"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                        Required to approve claims of ₹1,000 or more.
+                    </p>
+                </div>
 
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <button

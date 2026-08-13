@@ -1,4 +1,5 @@
 from bson import ObjectId
+from datetime import datetime, timezone
 
 from app.database.connection import (
     user_collection,
@@ -12,6 +13,9 @@ from app.utils.helper import (
     registration_request_serializer,
     expense_serializer
 )
+from app.utils.receipt_storage import remove_receipt
+
+RECEIPT_REQUIRED_AMOUNT = 1000
 
 
 class AdminService:
@@ -200,7 +204,7 @@ class AdminService:
         }
 
     @staticmethod
-    def approve_expense(id, current_user):
+    def approve_expense(id, current_user, note=None):
 
         expense = expense_collection.find_one(
             {
@@ -218,13 +222,18 @@ class AdminService:
         if current_user["role"] == "manager" and owner and owner.get("role") != "user":
             return "unauthorized"
 
+        if float(expense.get("amount", 0)) >= RECEIPT_REQUIRED_AMOUNT and not expense.get("receipt"):
+            return "receipt_required"
+
         expense_collection.update_one(
             {
                 "_id": ObjectId(id)
             },
             {
                 "$set": {
-                    "status": "Approved"
+                    "status": "Approved",
+                    "approval_note": note,
+                    "reviewed_at": datetime.now(timezone.utc),
                 }
             }
         )
@@ -239,7 +248,9 @@ class AdminService:
 
     @staticmethod
     def delete_expense(id):
-
+        expense = expense_collection.find_one({"_id": ObjectId(id)})
+        if expense:
+            remove_receipt(expense.get("receipt"))
         result = expense_collection.delete_one(
             {
                 "_id": ObjectId(id)
@@ -252,7 +263,7 @@ class AdminService:
         return {"message": "Expense deleted successfully"}
 
     @staticmethod
-    def reject_expense(id, current_user):
+    def reject_expense(id, current_user, note=None):
 
         expense = expense_collection.find_one(
             {
@@ -276,7 +287,9 @@ class AdminService:
             },
             {
                 "$set": {
-                    "status": "Rejected"
+                    "status": "Rejected",
+                    "approval_note": note,
+                    "reviewed_at": datetime.now(timezone.utc),
                 }
             }
         )
@@ -288,3 +301,13 @@ class AdminService:
         )
 
         return expense_serializer(expense)
+
+    @staticmethod
+    def get_receipt_for_review(id, current_user):
+        expense = expense_collection.find_one({"_id": ObjectId(id)})
+        if not expense:
+            return None
+        owner = user_collection.find_one({"_id": ObjectId(expense["user_id"])})
+        if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+            return "unauthorized"
+        return expense

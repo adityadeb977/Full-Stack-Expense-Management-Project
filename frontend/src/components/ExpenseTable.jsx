@@ -75,21 +75,27 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
 
     const approveExpense = async (id) => {
         try {
-            await API.put(`/admin/expenses/${id}/approve`);
+            const note = window.prompt("Approval note (optional):");
+            if (note === null) return;
+            await API.put(`/admin/expenses/${id}/approve`, { note });
             fetchExpenses();
             onAction?.();
         } catch (error) {
             console.error(error);
+            alert(error.response?.data?.detail || "Could not approve expense");
         }
     };
 
     const rejectExpense = async (id) => {
         try {
-            await API.put(`/admin/expenses/${id}/reject`);
+            const note = window.prompt("Reason for rejection (optional):");
+            if (note === null) return;
+            await API.put(`/admin/expenses/${id}/reject`, { note });
             fetchExpenses();
             onAction?.();
         } catch (error) {
             console.error(error);
+            alert(error.response?.data?.detail || "Could not reject expense");
         }
     };
 
@@ -110,7 +116,36 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
         onEdit?.(expense);
     };
 
-    const colSpan = (admin || approver) ? 7 : 6;
+    const openReceipt = async (expense) => {
+        try {
+            const endpoint = admin || approver
+                ? `/admin/expenses/${expense.id}/receipt`
+                : `/expenses/${expense.id}/receipt`;
+            const response = await API.get(endpoint, { responseType: "blob" });
+            const url = URL.createObjectURL(response.data);
+            window.open(url, "_blank", "noopener,noreferrer");
+            setTimeout(() => URL.revokeObjectURL(url), 60_000);
+        } catch (error) {
+            alert(error.response?.data?.detail || "Could not open receipt");
+        }
+    };
+
+    const readReceipt = async (expense) => {
+        try {
+            const endpoint = admin || approver
+                ? `/admin/expenses/${expense.id}/receipt/ocr`
+                : `/expenses/${expense.id}/receipt/ocr`;
+            const response = await API.get(endpoint);
+            const data = response.data;
+            alert(data.available
+                ? `Suggested amount: ${data.suggested_amount ?? "not found"}`
+                : data.reason);
+        } catch (error) {
+            alert(error.response?.data?.detail || "Could not read receipt");
+        }
+    };
+
+    const colSpan = (admin || approver) ? 8 : 7;
 
     return (
         <div>
@@ -129,6 +164,7 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
                             <th className="px-4 py-3 text-left">Amount</th>
                             <th className="px-4 py-3 text-left">Category</th>
                             <th className="px-4 py-3 text-left">Date</th>
+                            <th className="px-4 py-3 text-left">Receipt</th>
                             {(admin || approver) && (
                                 <th className="px-4 py-3 text-left">Submitted By</th>
                             )}
@@ -146,11 +182,28 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
                             </tr>
                         ) : expenses.length > 0 ? (
                             expenses.map((expense) => (
-                                <tr key={expense.id} className="border-b hover:bg-gray-100">
+                                <React.Fragment key={expense.id}>
+                                <tr className="border-b hover:bg-gray-100">
                                     <td className="px-4 py-3">{expense.title}</td>
                                     <td className="px-4 py-3">₹{expense.amount}</td>
                                     <td className="px-4 py-3">{expense.category}</td>
                                     <td className="px-4 py-3">{formatDate(expense.created_at)}</td>
+                                    <td className="px-4 py-3">
+                                        {expense.receipt ? (
+                                            <div className="flex flex-col items-start gap-1">
+                                                <button onClick={() => openReceipt(expense)} className="text-sm text-blue-700 underline">
+                                                    View
+                                                </button>
+                                                <button onClick={() => readReceipt(expense)} className="text-xs text-gray-600 underline">
+                                                    Read receipt
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <span className={expense.amount >= 1000 ? "text-sm font-medium text-red-600" : "text-gray-500"}>
+                                                {expense.amount >= 1000 ? "Required" : "None"}
+                                            </span>
+                                        )}
+                                    </td>
                                     {(admin || approver) && (
                                         <td className="px-4 py-3">{expense.user_name}</td>
                                     )}
@@ -217,6 +270,14 @@ const ExpenseTable = ({ admin = false, approver = false, refreshFlag, onEdit, on
                                         )}
                                     </td>
                                 </tr>
+                                {expense.approval_note && (
+                                    <tr className="border-b bg-gray-50">
+                                        <td colSpan={colSpan} className="px-4 py-2 text-sm text-gray-600">
+                                            Review note: {expense.approval_note}
+                                        </td>
+                                    </tr>
+                                )}
+                                </React.Fragment>
                             ))
                         ) : (
                             <tr>

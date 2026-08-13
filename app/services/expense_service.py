@@ -5,6 +5,7 @@ from bson import ObjectId
 from app.database.connection import expense_collection
 from app.utils.expense_filters import build_expense_query, enrich_expense_with_user
 from app.utils.helper import expense_serializer
+from app.utils.receipt_storage import remove_receipt
 
 
 class ExpenseService:
@@ -150,6 +151,7 @@ class ExpenseService:
         if existing_expense["status"] != "Pending":
             return "cannot_delete"
 
+        remove_receipt(existing_expense.get("receipt"))
         expense_collection.delete_one(
             {
                 "_id": ObjectId(id)
@@ -159,3 +161,16 @@ class ExpenseService:
         return {
             "message": "Expense deleted successfully"
         }
+
+    @staticmethod
+    def attach_receipt(id, receipt, current_user):
+        existing_expense = expense_collection.find_one({"_id": ObjectId(id)})
+        if not existing_expense:
+            return None
+        if existing_expense["user_id"] != str(current_user["_id"]):
+            return "unauthorized"
+        if existing_expense["status"] != "Pending":
+            return "cannot_edit"
+        remove_receipt(existing_expense.get("receipt"))
+        expense_collection.update_one({"_id": ObjectId(id)}, {"$set": {"receipt": receipt}})
+        return expense_serializer(expense_collection.find_one({"_id": ObjectId(id)}))
