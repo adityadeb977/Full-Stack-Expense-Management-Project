@@ -21,11 +21,16 @@ def registration_request_serializer(request):
 
 def expense_serializer(expense):
 
+    created_at = expense.get("created_at")
+    if created_at and hasattr(created_at, "isoformat"):
+        created_at = created_at.isoformat()
+
     return {
         "id": str(expense["_id"]),
         "title": expense["title"],
         "amount": expense["amount"],
         "category": expense["category"],
         "user_id": expense["user_id"],
-        "status": expense["status"]
+        "status": expense["status"],
+        "created_at": created_at,
     }

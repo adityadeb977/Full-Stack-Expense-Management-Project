@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Depends, HTTPException, Body
+from typing import Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Body, Query
 
 from app.services.admin_service import AdminService
 from app.utils.admin import admin_required, approval_required
@@ -36,9 +38,30 @@ def update_user_role(
     return result
 
 @router.get("/expenses")
-def get_expenses(current_user=Depends(approval_required)):
-
-    return AdminService.get_all_expenses(current_user)
+def get_expenses(
+    current_user=Depends(approval_required),
+    search: Optional[str] = Query(None),
+    category: Optional[str] = Query(None),
+    status: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    min_amount: Optional[float] = Query(None),
+    max_amount: Optional[float] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(10, ge=1, le=100),
+):
+    return AdminService.get_all_expenses(
+        current_user,
+        search=search,
+        category=category,
+        status=status,
+        date_from=date_from,
+        date_to=date_to,
+        min_amount=min_amount,
+        max_amount=max_amount,
+        page=page,
+        page_size=page_size,
+    )
 
 @router.put("/expenses/{id}/approve")
 def approve(id: str, current_user=Depends(approval_required)):

@@ -1,6 +1,9 @@
+from datetime import datetime, timezone
+
 from bson import ObjectId
 
 from app.database.connection import expense_collection
+from app.utils.expense_filters import build_expense_query, enrich_expense_with_user
 from app.utils.helper import expense_serializer
 
 
@@ -16,6 +19,7 @@ class ExpenseService:
 
         # Every new expense starts as Pending
         expense_data["status"] = "Pending"
+        expense_data["created_at"] = datetime.now(timezone.utc)
 
         result = expense_collection.insert_one(expense_data)
 
@@ -26,18 +30,49 @@ class ExpenseService:
         )
 
     @staticmethod
-    def get_all_expenses(current_user):
+    def get_all_expenses(
+        current_user,
+        *,
+        search=None,
+        category=None,
+        status=None,
+        date_from=None,
+        date_to=None,
+        min_amount=None,
+        max_amount=None,
+        page=1,
+        page_size=10,
+    ):
+        query = build_expense_query(
+            current_user,
+            search=search,
+            category=category,
+            status=status,
+            date_from=date_from,
+            date_to=date_to,
+            min_amount=min_amount,
+            max_amount=max_amount,
+            admin_list=False,
+        )
+
+        skip = (page - 1) * page_size
+        total = expense_collection.count_documents(query)
 
         expenses = []
-
-        for expense in expense_collection.find(
-            {
-                "user_id": str(current_user["_id"])
-            }
+        for expense in (
+            expense_collection.find(query)
+            .sort("created_at", -1)
+            .skip(skip)
+            .limit(page_size)
         ):
             expenses.append(expense_serializer(expense))
 
-        return expenses
+        return {
+            "items": expenses,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+        }
 
     @staticmethod
     def get_expense_by_id(id, current_user):
