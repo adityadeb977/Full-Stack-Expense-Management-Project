@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import React from 'react'
 import API from './services/api'
-const UserForm = ({ fetchUsers, onClose }) => {
+const UserForm = ({ fetchUsers, onClose, titleId }) => {
     const {
         register,
         handleSubmit,
@@ -22,7 +22,7 @@ const UserForm = ({ fetchUsers, onClose }) => {
   return (
     <div className="rounded-xl bg-white p-6 shadow-xl ring-1 ring-black/10">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-2xl font-bold">Add Employee</h3>
+        <h3 id={titleId} className="text-2xl font-bold">Add Employee</h3>
         <button
           type="button"
           onClick={onClose}
