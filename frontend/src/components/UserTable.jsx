@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "./services/api";
 
-const UserTable = ({ admin = false, refreshFlag = 0, onAction }) => {
+const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) => {
 
     const [users, setUsers] = useState([]);
 
@@ -30,6 +30,12 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction }) => {
         fetchUsers();
 
     }, [refreshFlag]);
+
+    const filteredUsers = users.filter((user) => {
+        const query = search.trim().toLowerCase();
+        if (!query) return true;
+        return `${user.name} ${user.email} ${user.role}`.toLowerCase().includes(query);
+    });
 
     return (
 
@@ -66,9 +72,9 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction }) => {
 
                 <tbody>
 
-                    {users.length > 0 ? (
+                    {filteredUsers.length > 0 ? (
 
-                        users.map((user) => (
+                        filteredUsers.map((user) => (
 
                             <tr
                                 key={user.id}
