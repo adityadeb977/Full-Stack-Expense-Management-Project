@@ -164,42 +164,5 @@ Open `http://127.0.0.1:5173` in a browser. The frontend API client is configured
 Run these commands from the `frontend` directory:
 
 ```bash
-npm run dev      # Start the Vite development server
-npm run build    # Create a production build
-npm run preview  # Preview the production build locally
-npm run lint     # Run ESLint checks
+npm run build
 ```
-
-## Main API Areas
-
-| Area | Endpoints | Purpose |
-| --- | --- | --- |
-| Authentication | `POST /login`, `POST /register` | Log in and submit registration requests |
-| Users | `GET /users`, `POST /users` | Read users and create employees |
-| Expenses | `/expenses` | Create, read, update, delete, filter, and paginate expenses |
-| Receipts | `/expenses/{id}/receipt` | Upload and download expense receipts |
-| OCR | `/expenses/{id}/receipt/ocr` | Extract available receipt details |
-| Admin users | `/admin/users` | Manage users and roles |
-| Admin expenses | `/admin/expenses` | Review, approve, reject, filter, and delete expenses |
-| Admin statistics | `GET /admin/stats` | Retrieve dashboard statistics |
-| Registration requests | `/admin/registration-requests` | Approve or reject employee registration requests |
-
-## Authentication and Authorization
-
-After login, the frontend stores the access token and role information in browser local storage. Axios attaches the token to API requests using the `Authorization: Bearer <token>` header.
-
-The backend protects routes according to role:
-
-- Authenticated users can manage their own expenses.
-- Managers and administrators can review expense submissions.
-- Administrators can manage users, roles, registration requests, and workspace statistics.
-
-## Receipt and OCR Notes
-
-Receipts support JPEG, PNG, and PDF files. Receipt files are stored by the backend and can be viewed from the expense tables. OCR availability depends on the installed OCR tooling and the quality/type of the uploaded receipt.
-
-## Development Notes
-
-- Keep the backend running on port `8000` and the Vite frontend on port `5173` unless the API client and CORS settings are updated accordingly.
-- Do not commit `.env`, credentials, uploaded receipts, or generated cache files.
-- Use the Swagger UI at `/docs` to inspect and manually exercise API endpoints.

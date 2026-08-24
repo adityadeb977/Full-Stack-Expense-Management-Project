@@ -4,10 +4,12 @@ import UserTable from "../components/UserTable";
 import UserForm from "../components/UserForm";
 import ExpenseTable from "../components/ExpenseTable";
 import API from "../components/services/api";
+import RiskRadar from "../components/RiskRadar";
 
 const views = [
     { id: "welcome", label: "Welcome" },
     { id: "statistics", label: "Statistics" },
+    { id: "risk-radar", label: "Risk Radar" },
     { id: "employees", label: "Employees" },
     { id: "expenses", label: "Expenses" },
 ];
@@ -88,6 +90,7 @@ const AdminDashboard = () => {
                             <p className="mt-1 text-sm text-slate-500">
                                 {activeView === "welcome" && "Choose a section from the sidebar to get started."}
                                 {activeView === "statistics" && "A quick overview of your expense workspace."}
+                                {activeView === "risk-radar" && "Find claims that may need investigation before approval."}
                                 {activeView === "employees" && "Search and manage employees and managers."}
                                 {activeView === "expenses" && "Review, filter, and process submitted expenses."}
                             </p>
@@ -141,6 +144,8 @@ const AdminDashboard = () => {
                             <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">Loading statistics...</div>
                         )
                     )}
+
+                    {activeView === "risk-radar" && <RiskRadar refreshFlag={refreshFlag} />}
 
                     {activeView === "employees" && (
                         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
