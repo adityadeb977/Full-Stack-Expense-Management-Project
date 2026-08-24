@@ -2,9 +2,11 @@ import React, { useState } from "react";
 import NavBar from "../components/NavBar";
 import ExpenseForm from "../components/ExpenseForm";
 import ExpenseTable from "../components/ExpenseTable";
+import SpendingInsights from "../components/SpendingInsights";
 
 const employeeViews = [
     { id: "welcome", label: "Welcome" },
+    { id: "insights", label: "Insights" },
     { id: "add-expense", label: "Add expense" },
     { id: "expenses", label: "My expenses" },
 ];
@@ -63,6 +65,7 @@ const Dashboard = () => {
                         <h2 className="mt-1 text-3xl font-bold text-slate-900">{activeLabel}</h2>
                         <p className="mt-1 text-sm text-slate-500">
                             {activeView === "welcome" && "Choose a section from the sidebar to get started."}
+                            {activeView === "insights" && "Track your spending pace and set limits for the month."}
                             {activeView === "add-expense" && (selectedExpense ? "Update your expense submission." : "Submit a new expense for review.")}
                             {activeView === "expenses" && (isManager ? "Review and process your team's expense submissions." : "Search and review your expense submissions.")}
                         </p>
@@ -103,6 +106,8 @@ const Dashboard = () => {
                             />
                         </div>
                     )}
+
+                    {activeView === "insights" && !isManager && <SpendingInsights />}
 
                     {activeView === "expenses" && (
                         <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
