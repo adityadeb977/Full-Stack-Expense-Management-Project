@@ -80,3 +80,11 @@ For a production build:
 ```bash
 npm run build
 ```
+
+## Admin Risk Radar
+
+Risk Radar is an admin-only review queue that scans existing expense records and prioritizes claims that may need investigation. It flags missing required receipts, pending claims older than seven days, unusually large claims, and repeated title/category/amount combinations from the same employee within seven days.
+
+The scoring is explainable: missing receipts add 30 points, approval delays add 15, large claims add 20, and possible duplicates add 35. Claims are shown as Low, Medium, or High risk and are never automatically approved, rejected, or modified.
+
+Use `GET /admin/risk-radar` to retrieve the summary and flagged claims. The endpoint requires administrator access.

@@ -7,6 +7,7 @@ from app.services.admin_service import AdminService
 from app.utils.admin import admin_required, approval_required
 from app.utils.receipt_storage import receipt_path
 from app.services.receipt_ocr import extract_receipt_details
+from app.services.risk_radar_service import RiskRadarService
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
 
@@ -161,3 +162,8 @@ def reject_registration(id: str, current_user=Depends(admin_required)):
 def get_stats(current_user=Depends(admin_required)):
 
     return AdminService.get_dashboard_stats(current_user)
+
+
+@router.get("/risk-radar")
+def get_risk_radar(current_user=Depends(admin_required)):
+    return RiskRadarService.get_radar()
