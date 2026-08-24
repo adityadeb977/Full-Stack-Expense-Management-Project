@@ -1,3 +1,4 @@
+import re
 from typing import Optional
 
 from fastapi import APIRouter, HTTPException, Depends, Query, UploadFile, File
@@ -8,8 +9,39 @@ from app.services.expense_service import ExpenseService
 from app.utils.dependencies import get_current_user
 from app.utils.receipt_storage import save_receipt, receipt_path, remove_receipt
 from app.services.receipt_ocr import extract_receipt_details
+from app.models.budget import BudgetCreate
+from app.services.budget_service import BudgetService, CURRENT_MONTH
 
 router = APIRouter()
+
+
+@router.get("/budgets")
+def get_budgets(
+    month: Optional[str] = Query(None, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    current_user=Depends(get_current_user),
+):
+    return BudgetService.list_budgets(current_user, month)
+
+
+@router.put("/budgets/{month}")
+def upsert_budget(
+    month: str,
+    budget: BudgetCreate,
+    current_user=Depends(get_current_user),
+):
+    if not re.fullmatch(r"\d{4}-(0[1-9]|1[0-2])", month):
+        raise HTTPException(status_code=422, detail="Month must use YYYY-MM format")
+    return BudgetService.upsert_budget(
+        budget.model_copy(update={"month": month}), current_user
+    )
+
+
+@router.get("/insights")
+def get_insights(
+    month: str = Query(CURRENT_MONTH, pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
+    current_user=Depends(get_current_user),
+):
+    return BudgetService.get_insights(current_user, month)
 
 
 @router.post("/expenses")

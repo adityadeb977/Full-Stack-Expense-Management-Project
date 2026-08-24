@@ -71,31 +71,30 @@ All authenticated workspaces use focused sidebar navigation so related workflows
 └── Readme.md
 ```
 
-## Prerequisites
 
-Install the following before starting the project:
 
-- Python 3.11 or newer
-- Node.js 18 or newer and npm
-- MongoDB running locally or a reachable MongoDB instance
+### Backend
 
-## Configuration
-
-Create a `.env` file in the project root. At minimum, configure the MongoDB connection string:
-
-```env
-MONGO_URI=mongodb://localhost:27017/
-```
-
-The default database configuration is defined in `app/database/connection.py`. For production deployments, replace development secrets such as the JWT secret with environment-based secrets before exposing the API publicly.
-
-## Installation
-
-### 1. Set up the backend
-
-From the project root:
+Create and activate a virtual environment, then install the Python dependencies:
 
 ```bash
+
+## Budget Guardian
+
+Budget Guardian is a private employee workspace for monthly spending awareness. Employees can save an overall monthly budget and optional category budgets, then inspect approved spending for a selected month.
+
+- Approved expenses count toward budget consumption.
+- Pending and rejected amounts are shown separately and do not consume the approved-spending budget.
+- The month-end projection uses the current approved daily spending pace multiplied by the number of days in the month.
+- Alerts are deterministic and explainable: near budget at 80%, over budget above 100%, projected over budget, and category budgets exceeded.
+
+API endpoints:
+
+- `GET /budgets?month=YYYY-MM` reads the signed-in employee's budgets.
+- `PUT /budgets/{month}` saves an overall or category budget with `{ "amount": 25000, "category": null }`.
+- `GET /insights?month=YYYY-MM` returns totals, category spending, projection, and alerts.
+
+Budget and insight endpoints are scoped to the authenticated employee and do not expose another user's private budget data.
 python -m venv venv
 ```
 
