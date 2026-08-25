@@ -12,16 +12,16 @@ const employeeViews = [
 ];
 
 const managerViews = [
-    { id: "welcome", label: "Welcome" },
+    { id: "home", label: "Home" },
     { id: "expenses", label: "Team expenses" },
 ];
 
 const Dashboard = () => {
-    const [selectedExpense, setSelectedExpense] = useState(null);
-    const [refreshFlag, setRefreshFlag] = useState(false);
-    const [activeView, setActiveView] = useState("welcome");
     const role = localStorage.getItem("role");
     const isManager = role === "manager";
+    const [selectedExpense, setSelectedExpense] = useState(null);
+    const [refreshFlag, setRefreshFlag] = useState(false);
+    const [activeView, setActiveView] = useState(isManager ? "home" : "welcome");
     const views = isManager ? managerViews : employeeViews;
     const activeLabel = views.find((view) => view.id === activeView)?.label;
 
@@ -64,6 +64,7 @@ const Dashboard = () => {
                         <p className="text-sm font-semibold text-[#193680]">{isManager ? "Manager dashboard" : "Employee dashboard"}</p>
                         <h2 className="mt-1 text-3xl font-bold text-slate-900">{activeLabel}</h2>
                         <p className="mt-1 text-sm text-slate-500">
+                            {activeView === "home" && "Lead your team with clarity and confidence."}
                             {activeView === "welcome" && "Choose a section from the sidebar to get started."}
                             {activeView === "insights" && "Track your spending pace and set limits for the month."}
                             {activeView === "add-expense" && (selectedExpense ? "Update your expense submission." : "Submit a new expense for review.")}
@@ -71,7 +72,22 @@ const Dashboard = () => {
                         </p>
                     </div>
 
-                    {activeView === "welcome" && (
+                    {isManager && activeView === "home" && (
+                        <section className="flex min-h-[calc(100vh-220px)] items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-slate-100 px-6 py-16 text-center shadow-sm sm:px-10">
+                            <div className="max-w-3xl">
+                                <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#193680] text-2xl font-bold text-white shadow-lg shadow-blue-900/20">
+                                    EM
+                                </div>
+                                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#193680]">Manager workspace</p>
+                                <h3 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">Welcome to your manager workspace</h3>
+                                <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
+                                    Keep your team moving forward with a clear view of every expense and decision that matters.
+                                </p>
+                            </div>
+                        </section>
+                    )}
+
+                    {!isManager && activeView === "welcome" && (
                         <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
                             <div className="max-w-2xl">
                                 <p className="text-sm font-semibold uppercase tracking-wider text-[#193680]">Expense workspace</p>
