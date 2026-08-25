@@ -26,9 +26,11 @@ const UserForm = ({ fetchUsers, onClose, titleId }) => {
         <button
           type="button"
           onClick={onClose}
-          className="text-sm font-semibold text-gray-500 hover:text-gray-700"
+          aria-label="Close"
+          title="Close"
+          className="text-3xl leading-none font-semibold text-gray-500 transition hover:text-gray-700"
         >
-          Close
+          ×
         </button>
       </div>
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4 w-full">
@@ -55,9 +57,9 @@ const UserForm = ({ fetchUsers, onClose, titleId }) => {
             </select>
         </div>
         <div className="flex justify-between">
-      <button disabled={isSubmitting} type="submit" className="py-3 px-3 bg-[#193680] rounded-xl hover:bg-[#26479b] text-white">Submit</button>
+      <button disabled={isSubmitting} type="submit" className="py-3 px-3 bg-green-600 rounded-xl hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-60 text-white">Submit</button>
       {isSubmitting && <div>Loading....</div>}
-      <button type="button" className="py-3 px-3 bg-[#193680] rounded-xl hover:bg-[#26479b] text-white" onClick={onClose}>Close</button>
+      <button type="button" className="py-3 px-3 bg-red-600 rounded-xl hover:bg-red-700 text-white" onClick={onClose}>Close</button>
       </div>
     </form>
     </div>

@@ -4,6 +4,8 @@ import API from "./services/api";
 const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) => {
 
     const [users, setUsers] = useState([]);
+    const [pendingDeleteUser, setPendingDeleteUser] = useState(null);
+    const [isDeleting, setIsDeleting] = useState(false);
 
     const fetchUsers = async () => {
 
@@ -31,6 +33,33 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
 
     }, [refreshFlag]);
 
+    useEffect(() => {
+        if (!pendingDeleteUser) return undefined;
+
+        const closeOnEscape = (event) => {
+            if (event.key === "Escape" && !isDeleting) setPendingDeleteUser(null);
+        };
+
+        document.addEventListener("keydown", closeOnEscape);
+        return () => document.removeEventListener("keydown", closeOnEscape);
+    }, [pendingDeleteUser, isDeleting]);
+
+    const confirmDelete = async () => {
+        if (!pendingDeleteUser) return;
+
+        setIsDeleting(true);
+        try {
+            await API.delete(`/admin/users/${pendingDeleteUser.id}`);
+            fetchUsers();
+            onAction?.();
+            setPendingDeleteUser(null);
+        } catch (error) {
+            console.error("Error deleting employee", error);
+        } finally {
+            setIsDeleting(false);
+        }
+    };
+
     const filteredUsers = users.filter((user) => {
         const query = search.trim().toLowerCase();
         if (!query) return true;
@@ -38,7 +67,7 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
     });
 
     return (
-
+        <>
         <div className="overflow-x-auto mt-3">
 
             <table className="w-full border border-gray-300 rounded-lg overflow-hidden">
@@ -133,16 +162,7 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
                                                     )}
                                                     <button
                                                         className="rounded-xl bg-red-600 px-3 py-2 text-white hover:bg-red-700"
-                                                        onClick={async () => {
-                                                            if (!window.confirm(`Delete ${user.name}?`)) return;
-                                                            try {
-                                                                await API.delete(`/admin/users/${user.id}`);
-                                                                fetchUsers();
-                                                                onAction?.();
-                                                            } catch (error) {
-                                                                console.error("Error deleting employee", error);
-                                                            }
-                                                        }}
+                                                        onClick={() => setPendingDeleteUser(user)}
                                                     >
                                                         Delete
                                                     </button>
@@ -176,6 +196,64 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
             </table>
 
         </div>
+
+        {pendingDeleteUser && (
+            <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 p-4"
+                role="presentation"
+                onMouseDown={(event) => {
+                    if (event.target === event.currentTarget && !isDeleting) setPendingDeleteUser(null);
+                }}
+            >
+                <div
+                    className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-labelledby="delete-user-title"
+                    aria-describedby="delete-user-description"
+                    onMouseDown={(event) => event.stopPropagation()}
+                >
+                    <div className="flex items-start justify-between gap-4">
+                        <div>
+                            <p className="text-sm font-semibold uppercase tracking-wider text-red-600">Delete account</p>
+                            <h2 id="delete-user-title" className="mt-2 text-2xl font-bold text-slate-900">Confirm deletion</h2>
+                        </div>
+                        <button
+                            type="button"
+                            aria-label="Cancel deletion"
+                            title="Cancel"
+                            disabled={isDeleting}
+                            onClick={() => setPendingDeleteUser(null)}
+                            className="text-3xl leading-none text-slate-400 transition hover:text-slate-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            ×
+                        </button>
+                    </div>
+                    <p id="delete-user-description" className="mt-4 text-base leading-7 text-slate-600">
+                        Are you sure you want to delete this {pendingDeleteUser.role === "manager" ? "manager" : "employee"}, <span className="font-semibold text-slate-900">{pendingDeleteUser.name}</span>?
+                    </p>
+                    <div className="mt-7 flex justify-end gap-3">
+                        <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={() => setPendingDeleteUser(null)}
+                            className="rounded-lg border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="button"
+                            disabled={isDeleting}
+                            onClick={confirmDelete}
+                            className="rounded-lg bg-red-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                            {isDeleting ? "Deleting..." : "Delete"}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
+        </>
 
     );
 
