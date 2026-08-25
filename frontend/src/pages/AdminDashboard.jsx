@@ -7,15 +7,14 @@ import API from "../components/services/api";
 import RiskRadar from "../components/RiskRadar";
 
 const views = [
-    { id: "welcome", label: "Welcome" },
-    { id: "statistics", label: "Statistics" },
+    { id: "home", label: "Home" },
     { id: "risk-radar", label: "Risk Radar" },
     { id: "employees", label: "Employees" },
     { id: "expenses", label: "Expenses" },
 ];
 
 const AdminDashboard = () => {
-    const [activeView, setActiveView] = useState("welcome");
+    const [activeView, setActiveView] = useState("home");
     const [showAddUser, setShowAddUser] = useState(false);
     const [refreshFlag, setRefreshFlag] = useState(0);
     const [stats, setStats] = useState(null);
@@ -88,8 +87,7 @@ const AdminDashboard = () => {
                             <p className="text-sm font-semibold text-[#193680]">Admin dashboard</p>
                             <h2 className="mt-1 text-3xl font-bold text-slate-900">{activeLabel}</h2>
                             <p className="mt-1 text-sm text-slate-500">
-                                {activeView === "welcome" && "Choose a section from the sidebar to get started."}
-                                {activeView === "statistics" && "A quick overview of your expense workspace."}
+                                {activeView === "home" && "A quick overview of your expense workspace."}
                                 {activeView === "risk-radar" && "Find claims that may need investigation before approval."}
                                 {activeView === "employees" && "Search and manage employees and managers."}
                                 {activeView === "expenses" && "Review, filter, and process submitted expenses."}
@@ -106,31 +104,7 @@ const AdminDashboard = () => {
                         )}
                     </div>
 
-                    {activeView === "welcome" && (
-                        <section className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm sm:p-10">
-                            <div className="max-w-2xl">
-                                <p className="text-sm font-semibold uppercase tracking-wider text-[#193680]">Admin workspace</p>
-                                <h3 className="mt-3 text-3xl font-bold text-slate-900 sm:text-4xl">Welcome back</h3>
-                                <p className="mt-4 text-base leading-7 text-slate-600">
-                                    Manage your team, review expense submissions, and monitor workspace performance from one place.
-                                </p>
-                                <div className="mt-8 grid gap-3 sm:grid-cols-3">
-                                    {views.slice(1).map((view) => (
-                                        <button
-                                            key={view.id}
-                                            type="button"
-                                            onClick={() => setActiveView(view.id)}
-                                            className="rounded-lg border border-slate-200 px-4 py-3 text-left text-sm font-semibold text-slate-700 transition hover:border-[#193680] hover:bg-blue-50 hover:text-[#193680]"
-                                        >
-                                            Open {view.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </section>
-                    )}
-
-                    {activeView === "statistics" && (
+                    {activeView === "home" && (
                         stats ? (
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                                 {statCards.map(([label, value, color]) => (
