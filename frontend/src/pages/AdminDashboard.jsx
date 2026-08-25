@@ -105,18 +105,33 @@ const AdminDashboard = () => {
                     </div>
 
                     {activeView === "home" && (
-                        stats ? (
-                            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                                {statCards.map(([label, value, color]) => (
-                                    <div key={label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
-                                        <p className="text-sm text-slate-500">{label}</p>
-                                        <p className={`mt-3 text-2xl font-bold ${color}`}>{value}</p>
+                        <div className="space-y-6">
+                            <section className="flex min-h-[360px] items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-slate-100 px-6 py-16 text-center shadow-sm sm:px-10">
+                                <div className="max-w-3xl">
+                                    <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#193680] text-2xl font-bold text-white shadow-lg shadow-blue-900/20">
+                                        EM
                                     </div>
-                                ))}
-                            </div>
-                        ) : (
-                            <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">Loading statistics...</div>
-                        )
+                                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#193680]">Admin workspace</p>
+                                    <h3 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">Welcome to your admin workspace</h3>
+                                    <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
+                                        Oversee your team, keep expenses moving, and stay informed with a clear view of your workspace.
+                                    </p>
+                                </div>
+                            </section>
+
+                            {stats ? (
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                                    {statCards.map(([label, value, color]) => (
+                                        <div key={label} className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+                                            <p className="text-sm text-slate-500">{label}</p>
+                                            <p className={`mt-3 text-2xl font-bold ${color}`}>{value}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="rounded-xl border border-slate-200 bg-white p-6 text-sm text-slate-500 shadow-sm">Loading statistics...</div>
+                            )}
+                        </div>
                     )}
 
                     {activeView === "risk-radar" && <RiskRadar refreshFlag={refreshFlag} />}
