@@ -21,6 +21,7 @@ The project contains:
 - View paginated expense results and expense details.
 - Edit or delete pending expenses.
 - View receipts and request receipt OCR details.
+- View their team name and the remaining amount from the team monthly budget.
 
 ### Manager
 
@@ -29,6 +30,7 @@ The project contains:
 - Search, filter, and paginate team expense submissions.
 - Can review expenses only for employees in their assigned team.
 - Approve or reject pending expenses with an optional review note.
+- View their team name and the remaining amount from the team monthly budget.
 - View submitted receipts and receipt OCR details.
 - Approvals for expenses of Rs. 1,000 or more require a receipt.
 
@@ -50,12 +52,20 @@ The project contains:
 - Approve, reject, and review expenses and receipts.
 - Review, approve, or reject registration requests through the admin API.
 
+### Employee Team Budget
+
+The employee Home view includes a read-only team budget summary. The remaining amount is the team's fixed monthly budget minus approved expenses from the team's manager and members for the team's budget month. Pending and rejected expenses do not reduce the remaining amount. Employees without a team see a clear unassigned state.
+
+API endpoint:
+
+- `GET /team` returns the authenticated employee's team name, budget month, budget amount, approved team spending, and remaining amount. It returns `{ "assigned": false }` when the employee has no team.
+
 ## Dashboard UI
 
 All authenticated workspaces use focused sidebar navigation so related workflows are kept in separate views instead of being displayed on one long page.
 
-- Employee: Welcome, Add Expense, My Expenses.
-- Manager: Welcome, Team Expenses.
+- Employee: Welcome with team budget summary and spending insights, Add Expense, My Expenses.
+- Manager: Welcome with team budget summary, Team Expenses.
 - Admin: Welcome, Statistics, Employees, Expenses.
 - Responsive navigation changes to a horizontal menu on smaller screens.
 - The admin Add Employee form opens in a modal with backdrop, Escape-key, and click-outside dismissal.

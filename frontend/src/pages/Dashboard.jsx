@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import NavBar from "../components/NavBar";
 import ExpenseForm from "../components/ExpenseForm";
 import ExpenseTable from "../components/ExpenseTable";
 import SpendingInsights from "../components/SpendingInsights";
+import TeamBudgetSummary from "../components/TeamBudgetSummary";
 
 const employeeViews = [
     { id: "home", label: "Home" },
@@ -70,21 +71,29 @@ const Dashboard = () => {
                     </div>
 
                     {isManager && activeView === "home" && (
-                        <section className="flex min-h-[calc(100vh-220px)] items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-slate-100 px-6 py-16 text-center shadow-sm sm:px-10">
-                            <div className="max-w-3xl">
-                                <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#193680] text-2xl font-bold text-white shadow-lg shadow-blue-900/20">
-                                    EM
+                        <div className="space-y-5">
+                            <section className="flex min-h-[calc(100vh-420px)] items-center justify-center overflow-hidden rounded-2xl border border-blue-100 bg-gradient-to-br from-white via-blue-50 to-slate-100 px-6 py-16 text-center shadow-sm sm:px-10">
+                                <div className="max-w-3xl">
+                                    <div className="mx-auto mb-7 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#193680] text-2xl font-bold text-white shadow-lg shadow-blue-900/20">
+                                        EM
+                                    </div>
+                                    <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#193680]">Manager workspace</p>
+                                    <h3 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">Welcome to your manager workspace</h3>
+                                    <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
+                                        Keep your team moving forward with a clear view of every expense and decision that matters.
+                                    </p>
                                 </div>
-                                <p className="text-sm font-semibold uppercase tracking-[0.25em] text-[#193680]">Manager workspace</p>
-                                <h3 className="mt-5 text-4xl font-bold tracking-tight text-slate-900 sm:text-6xl">Welcome to your manager workspace</h3>
-                                <p className="mx-auto mt-6 max-w-2xl text-lg leading-8 text-slate-600 sm:text-xl">
-                                    Keep your team moving forward with a clear view of every expense and decision that matters.
-                                </p>
-                            </div>
-                        </section>
+                            </section>
+                            <TeamBudgetSummary />
+                        </div>
                     )}
 
-                    {!isManager && activeView === "home" && <SpendingInsights />}
+                    {!isManager && activeView === "home" && (
+                        <div className="space-y-5">
+                            <TeamBudgetSummary />
+                            <SpendingInsights />
+                        </div>
+                    )}
 
                     {activeView === "add-expense" && !isManager && (
                         <div className="max-w-3xl">

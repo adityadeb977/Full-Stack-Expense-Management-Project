@@ -11,6 +11,7 @@ from app.utils.receipt_storage import save_receipt, receipt_path, remove_receipt
 from app.services.receipt_ocr import extract_receipt_details
 from app.models.budget import BudgetCreate
 from app.services.budget_service import BudgetService, CURRENT_MONTH
+from app.services.team_service import TeamService
 
 router = APIRouter()
 
@@ -42,6 +43,11 @@ def get_insights(
     current_user=Depends(get_current_user),
 ):
     return BudgetService.get_insights(current_user, month)
+
+
+@router.get("/team")
+def get_team_summary(current_user=Depends(get_current_user)):
+    return TeamService.get_user_team_summary(current_user)
 
 
 @router.post("/expenses")

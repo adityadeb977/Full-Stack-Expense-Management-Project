@@ -3,7 +3,7 @@ import re
 
 from bson import ObjectId
 
-from app.database.connection import team_collection, user_collection
+from app.database.connection import expense_collection, team_collection, user_collection
 from app.utils.helper import team_serializer
 
 TEAM_BUDGET_AMOUNT = 10000
@@ -13,7 +13,56 @@ def _current_month():
     return datetime.now(timezone.utc).strftime("%Y-%m")
 
 
+def _month_bounds(month):
+    year, month_number = (int(part) for part in month.split("-"))
+    start = datetime(year, month_number, 1, tzinfo=timezone.utc)
+    if month_number == 12:
+        end = datetime(year + 1, 1, 1, tzinfo=timezone.utc)
+    else:
+        end = datetime(year, month_number + 1, 1, tzinfo=timezone.utc)
+    return start, end
+
+
 class TeamService:
+
+    @staticmethod
+    def get_user_team_summary(current_user):
+        team_id = current_user.get("team_id")
+        if not team_id:
+            return {"assigned": False}
+
+        try:
+            team = team_collection.find_one({"_id": ObjectId(team_id)})
+        except Exception:
+            team = None
+
+        if not team:
+            return {"assigned": False}
+
+        budget_month = team.get("budget_month") or _current_month()
+        start, end = _month_bounds(budget_month)
+        user_ids = set(team.get("member_ids", []))
+        if team.get("manager_id"):
+            user_ids.add(team["manager_id"])
+
+        approved_spending = sum(
+            float(expense.get("amount", 0) or 0)
+            for expense in expense_collection.find({
+                "user_id": {"$in": list(user_ids)},
+                "status": "Approved",
+                "created_at": {"$gte": start, "$lt": end},
+            })
+        )
+        budget_amount = float(team.get("budget_amount", 10000))
+
+        return {
+            "assigned": True,
+            "team": {"id": str(team["_id"]), "name": team["name"]},
+            "budget_month": budget_month,
+            "budget_amount": round(budget_amount, 2),
+            "approved_spending": round(approved_spending, 2),
+            "remaining": round(budget_amount - approved_spending, 2),
+        }
 
     @staticmethod
     def list_teams():
