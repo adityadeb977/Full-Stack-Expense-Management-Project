@@ -1,15 +1,17 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import NavBar from "../components/NavBar";
 import UserTable from "../components/UserTable";
 import UserForm from "../components/UserForm";
 import ExpenseTable from "../components/ExpenseTable";
 import API from "../components/services/api";
 import RiskRadar from "../components/RiskRadar";
+import TeamManagement from "../components/TeamManagement";
 
 const views = [
     { id: "home", label: "Home" },
     { id: "risk-radar", label: "Risk Radar" },
     { id: "employees", label: "Employees" },
+    { id: "teams", label: "Teams" },
     { id: "expenses", label: "Expenses" },
 ];
 
@@ -90,6 +92,7 @@ const AdminDashboard = () => {
                                 {activeView === "home" && "A quick overview of your expense workspace."}
                                 {activeView === "risk-radar" && "Find claims that may need investigation before approval."}
                                 {activeView === "employees" && "Search and manage employees and managers."}
+                                {activeView === "teams" && "Create teams and assign managers and employees."}
                                 {activeView === "expenses" && "Review, filter, and process submitted expenses."}
                             </p>
                         </div>
@@ -150,6 +153,12 @@ const AdminDashboard = () => {
                                 />
                             </div>
                             <UserTable admin={true} refreshFlag={refreshFlag} onAction={refreshData} search={employeeSearch} />
+                        </section>
+                    )}
+
+                    {activeView === "teams" && (
+                        <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+                            <TeamManagement refreshFlag={refreshFlag} onAction={refreshData} />
                         </section>
                     )}
 

@@ -27,6 +27,7 @@ The project contains:
 - Log in to a manager-specific workspace.
 - Use sidebar navigation for Welcome and Team Expenses.
 - Search, filter, and paginate team expense submissions.
+- Can review expenses only for employees in their assigned team.
 - Approve or reject pending expenses with an optional review note.
 - View submitted receipts and receipt OCR details.
 - Approvals for expenses of Rs. 1,000 or more require a receipt.
@@ -34,6 +35,12 @@ The project contains:
 ### Administrator
 
 - Use a separate admin dashboard with Welcome, Statistics, Employees, and Expenses views.
+- Manage company teams from a dedicated Teams view.
+- Create custom teams and assign one manager per team.
+- Assign or move employees between teams.
+- Team manager assignments auto-promote selected employees to manager.
+- Replacing a team manager demotes the previous manager to employee.
+- Every team has a fixed monthly budget of Rs. 10,000.
 - View workspace statistics including users, managers, expense counts, and amounts by status.
 - Search employees by name, email, or role.
 - Add employees or managers through a validated modal form.

@@ -31,6 +31,7 @@ class UserService:
 
         user_data["password"] = hash_password(user.password)
         user_data["role"] = user_data.get("role", "user")
+        user_data["team_id"] = None
 
         if user_data["role"] not in ["user", "manager"]:
             user_data["role"] = "user"

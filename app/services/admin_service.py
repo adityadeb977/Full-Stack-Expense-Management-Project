@@ -4,7 +4,8 @@ from datetime import datetime, timezone
 from app.database.connection import (
     user_collection,
     expense_collection,
-    registration_request_collection
+    registration_request_collection,
+    team_collection,
 )
 
 from app.utils.expense_filters import build_expense_query, enrich_expense_with_user
@@ -21,6 +22,17 @@ RECEIPT_REQUIRED_AMOUNT = 1000
 class AdminService:
 
     @staticmethod
+    def _manager_can_review_owner(current_user, owner):
+        if current_user["role"] != "manager":
+            return True
+
+        manager_team_id = current_user.get("team_id")
+        if not manager_team_id:
+            return False
+
+        return owner and owner.get("role") == "user" and owner.get("team_id") == manager_team_id
+
+    @staticmethod
     def get_all_users():
 
         users = []
@@ -32,6 +44,31 @@ class AdminService:
 
     @staticmethod
     def delete_user(id):
+
+        user = user_collection.find_one({"_id": ObjectId(id)})
+        if not user:
+            return None
+
+        user_id = str(id)
+
+        team_collection.update_many(
+            {"member_ids": user_id},
+            {
+                "$pull": {"member_ids": user_id},
+                "$set": {"updated_at": datetime.now(timezone.utc)},
+            },
+        )
+
+        if user.get("role") == "manager":
+            team_collection.update_many(
+                {"manager_id": user_id},
+                {
+                    "$set": {
+                        "manager_id": None,
+                        "updated_at": datetime.now(timezone.utc),
+                    }
+                },
+            )
 
         # Remove user-owned expenses first, then delete the user.
         expense_collection.delete_many(
@@ -53,13 +90,31 @@ class AdminService:
         if role not in ["user", "manager"]:
             return None
 
+        user = user_collection.find_one({"_id": ObjectId(id)})
+        if not user:
+            return None
+
+        user_id = str(id)
+
+        if role == "user" and user.get("role") == "manager":
+            team_collection.update_many(
+                {"manager_id": user_id},
+                {
+                    "$set": {
+                        "manager_id": None,
+                        "updated_at": datetime.now(timezone.utc),
+                    }
+                },
+            )
+            user_collection.update_one(
+                {"_id": ObjectId(id)},
+                {"$set": {"team_id": None}},
+            )
+
         result = user_collection.update_one(
             {"_id": ObjectId(id)},
             {"$set": {"role": role}}
         )
-
-        if result.matched_count == 0:
-            return None
 
         return user_serializer(
             user_collection.find_one(
@@ -84,7 +139,7 @@ class AdminService:
                 {"_id": ObjectId(expense["user_id"])}
             )
 
-            if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+            if not AdminService._manager_can_review_owner(current_user, owner):
                 continue
 
             amount = expense.get("amount", 0) or 0
@@ -132,7 +187,8 @@ class AdminService:
             "name": request["name"],
             "email": request["email"],
             "password": request["password"],
-            "role": request.get("role", "user")
+            "role": request.get("role", "user"),
+            "team_id": None,
         }
 
         result = user_collection.insert_one(user_data)
@@ -219,7 +275,7 @@ class AdminService:
             {"_id": ObjectId(expense["user_id"])}
         )
 
-        if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+        if not AdminService._manager_can_review_owner(current_user, owner):
             return "unauthorized"
 
         if float(expense.get("amount", 0)) >= RECEIPT_REQUIRED_AMOUNT and not expense.get("receipt"):
@@ -278,7 +334,7 @@ class AdminService:
             {"_id": ObjectId(expense["user_id"])}
         )
 
-        if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+        if not AdminService._manager_can_review_owner(current_user, owner):
             return "unauthorized"
 
         expense_collection.update_one(
@@ -308,6 +364,6 @@ class AdminService:
         if not expense:
             return None
         owner = user_collection.find_one({"_id": ObjectId(expense["user_id"])})
-        if current_user["role"] == "manager" and owner and owner.get("role") != "user":
+        if not AdminService._manager_can_review_owner(current_user, owner):
             return "unauthorized"
         return expense

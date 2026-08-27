@@ -33,9 +33,17 @@ def build_expense_query(
     if not admin_list:
         query["user_id"] = str(current_user["_id"])
     elif current_user["role"] == "manager":
+        manager_team_id = current_user.get("team_id")
+        if not manager_team_id:
+            query["user_id"] = {"$in": []}
+            return query
+
         employee_ids = [
             str(user["_id"])
-            for user in user_collection.find({"role": "user"}, {"_id": 1})
+            for user in user_collection.find(
+                {"role": "user", "team_id": manager_team_id},
+                {"_id": 1},
+            )
         ]
         query["user_id"] = {"$in": employee_ids}
 

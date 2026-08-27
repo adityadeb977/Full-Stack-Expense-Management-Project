@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import API from "./services/api";
 
 const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) => {
@@ -7,7 +7,7 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
     const [pendingDeleteUser, setPendingDeleteUser] = useState(null);
     const [isDeleting, setIsDeleting] = useState(false);
 
-    const fetchUsers = async () => {
+    const fetchUsers = useCallback(async () => {
 
         try {
 
@@ -25,13 +25,16 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
 
         }
 
-    };
+    }, [admin]);
 
     useEffect(() => {
+        const timer = setTimeout(() => {
+            fetchUsers();
+        }, 0);
 
-        fetchUsers();
+        return () => clearTimeout(timer);
 
-    }, [refreshFlag]);
+    }, [refreshFlag, fetchUsers]);
 
     useEffect(() => {
         if (!pendingDeleteUser) return undefined;
@@ -63,7 +66,7 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
     const filteredUsers = users.filter((user) => {
         const query = search.trim().toLowerCase();
         if (!query) return true;
-        return `${user.name} ${user.email} ${user.role}`.toLowerCase().includes(query);
+        return `${user.name} ${user.email} ${user.role} ${user.team_name || ""}`.toLowerCase().includes(query);
     });
 
     return (
@@ -88,6 +91,9 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
                             <>
                                 <th className="px-4 py-3 text-left">
                                     Role
+                                </th>
+                                <th className="px-4 py-3 text-left">
+                                    Team
                                 </th>
                                 <th className="px-4 py-3 text-left">
                                     Actions
@@ -124,6 +130,9 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
                                             {user.role === "user"
                                                 ? "Employee"
                                                 : user.role?.charAt(0).toUpperCase() + user.role?.slice(1)}
+                                        </td>
+                                        <td className="px-4 py-3">
+                                            {user.team_name || "Unassigned"}
                                         </td>
                                         <td className="px-4 py-3 flex flex-wrap gap-2">
                                             {!user.role || user.role !== "admin" ? (
@@ -183,7 +192,7 @@ const UserTable = ({ admin = false, refreshFlag = 0, onAction, search = "" }) =>
                         <tr>
 
                             <td
-                                colSpan={admin ? 4 : 2}
+                                colSpan={admin ? 5 : 2}
                                 className="text-center py-4 text-gray-500"
                             >
                                 No employees found

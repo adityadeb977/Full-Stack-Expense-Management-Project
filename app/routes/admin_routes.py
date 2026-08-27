@@ -4,12 +4,96 @@ from fastapi import APIRouter, Depends, HTTPException, Body, Query
 from fastapi.responses import FileResponse
 
 from app.services.admin_service import AdminService
+from app.services.team_service import TeamService
+from app.models.team import TeamCreate, TeamAssignManager
 from app.utils.admin import admin_required, approval_required
 from app.utils.receipt_storage import receipt_path
 from app.services.receipt_ocr import extract_receipt_details
 from app.services.risk_radar_service import RiskRadarService
 
 router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+@router.get("/teams")
+def get_teams(current_user=Depends(admin_required)):
+    return TeamService.list_teams()
+
+
+@router.post("/teams")
+def create_team(team_data: TeamCreate, current_user=Depends(admin_required)):
+    result = TeamService.create_team(team_data)
+
+    if result == "invalid_name":
+        raise HTTPException(status_code=400, detail="Team name cannot be empty")
+
+    if result == "already_exists":
+        raise HTTPException(status_code=400, detail="Team already exists")
+
+    return result
+
+
+@router.put("/teams/{team_id}/manager")
+def assign_team_manager(
+    team_id: str,
+    payload: TeamAssignManager,
+    current_user=Depends(admin_required),
+):
+    result = TeamService.assign_manager(team_id, payload.user_id)
+
+    if result == "team_not_found":
+        raise HTTPException(status_code=404, detail="Team not found")
+    if result == "user_not_found":
+        raise HTTPException(status_code=404, detail="User not found")
+    if result == "invalid_user_role":
+        raise HTTPException(status_code=400, detail="Admin cannot be assigned as team manager")
+
+    return result
+
+
+@router.put("/teams/{team_id}/members/{user_id}")
+def assign_team_member(team_id: str, user_id: str, current_user=Depends(admin_required)):
+    result = TeamService.assign_member(team_id, user_id)
+
+    if result == "team_not_found":
+        raise HTTPException(status_code=404, detail="Team not found")
+    if result == "user_not_found":
+        raise HTTPException(status_code=404, detail="User not found")
+    if result == "invalid_user_role":
+        raise HTTPException(status_code=400, detail="Only employees can be assigned as team members")
+    if result == "manager_conflict":
+        raise HTTPException(status_code=400, detail="Current team manager cannot be assigned as member")
+
+    return result
+
+
+@router.delete("/teams/{team_id}/members/{user_id}")
+def remove_team_member(team_id: str, user_id: str, current_user=Depends(admin_required)):
+    result = TeamService.remove_member(team_id, user_id)
+
+    if result == "team_not_found":
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    return result
+
+
+@router.delete("/teams/{team_id}/manager")
+def remove_team_manager(team_id: str, current_user=Depends(admin_required)):
+    result = TeamService.remove_manager(team_id)
+
+    if result == "team_not_found":
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    return result
+
+
+@router.delete("/teams/{team_id}")
+def delete_team(team_id: str, current_user=Depends(admin_required)):
+    result = TeamService.delete_team(team_id)
+
+    if result is None:
+        raise HTTPException(status_code=404, detail="Team not found")
+
+    return result
 
 
 @router.get("/users")
