@@ -37,12 +37,14 @@ The project contains:
 ### Administrator
 
 - Use a separate admin dashboard with Welcome, Statistics, Employees, and Expenses views.
+- Use the Risk Radar view to review every team's budget, approved spending, and remaining amount.
 - Manage company teams from a dedicated Teams view.
 - Create custom teams and assign one manager per team.
 - Assign or move employees between teams.
 - Team manager assignments auto-promote selected employees to manager.
 - Replacing a team manager demotes the previous manager to employee.
 - Every team has a fixed monthly budget of Rs. 10,000.
+- Team budget remaining is calculated from approved expenses belonging to each team's manager and members for the team's budget month.
 - View workspace statistics including users, managers, expense counts, and amounts by status.
 - Search employees by name, email, or role.
 - Add employees or managers through a validated modal form.

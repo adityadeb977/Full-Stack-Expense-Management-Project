@@ -90,7 +90,7 @@ const AdminDashboard = () => {
                             <h2 className="mt-1 text-3xl font-bold text-slate-900">{activeLabel}</h2>
                             <p className="mt-1 text-sm text-slate-500">
                                 {activeView === "home" && "A quick overview of your expense workspace."}
-                                {activeView === "risk-radar" && "Find claims that may need investigation before approval."}
+                                {activeView === "risk-radar" && "Monitor the budget remaining across every team."}
                                 {activeView === "employees" && "Search and manage employees and managers."}
                                 {activeView === "teams" && "Create teams and assign managers and employees."}
                                 {activeView === "expenses" && "Review, filter, and process submitted expenses."}

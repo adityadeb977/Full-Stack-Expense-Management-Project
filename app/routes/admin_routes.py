@@ -19,6 +19,11 @@ def get_teams(current_user=Depends(admin_required)):
     return TeamService.list_teams()
 
 
+@router.get("/team-budgets")
+def get_team_budgets(current_user=Depends(admin_required)):
+    return TeamService.list_team_budgets()
+
+
 @router.post("/teams")
 def create_team(team_data: TeamCreate, current_user=Depends(admin_required)):
     result = TeamService.create_team(team_data)

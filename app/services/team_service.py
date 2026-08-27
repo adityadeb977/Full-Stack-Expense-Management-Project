@@ -26,6 +26,36 @@ def _month_bounds(month):
 class TeamService:
 
     @staticmethod
+    def list_team_budgets():
+        team_budgets = []
+        for team in team_collection.find().sort("name", 1):
+            budget_month = team.get("budget_month") or _current_month()
+            start, end = _month_bounds(budget_month)
+            user_ids = set(team.get("member_ids", []))
+            if team.get("manager_id"):
+                user_ids.add(team["manager_id"])
+
+            approved_spending = sum(
+                float(expense.get("amount", 0) or 0)
+                for expense in expense_collection.find({
+                    "user_id": {"$in": list(user_ids)},
+                    "status": "Approved",
+                    "created_at": {"$gte": start, "$lt": end},
+                })
+            )
+            budget_amount = float(team.get("budget_amount", TEAM_BUDGET_AMOUNT))
+            team_budgets.append({
+                "id": str(team["_id"]),
+                "name": team["name"],
+                "budget_month": budget_month,
+                "budget_amount": round(budget_amount, 2),
+                "approved_spending": round(approved_spending, 2),
+                "remaining": round(budget_amount - approved_spending, 2),
+            })
+
+        return team_budgets
+
+    @staticmethod
     def get_user_team_summary(current_user):
         team_id = current_user.get("team_id")
         if not team_id:
