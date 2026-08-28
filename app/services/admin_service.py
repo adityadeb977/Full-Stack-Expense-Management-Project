@@ -6,6 +6,7 @@ from app.database.connection import (
     expense_collection,
     registration_request_collection,
     team_collection,
+    audit_log_collection,
 )
 
 from app.utils.expense_filters import build_expense_query, enrich_expense_with_user
@@ -20,6 +21,32 @@ RECEIPT_REQUIRED_AMOUNT = 1000
 
 
 class AdminService:
+
+    @staticmethod
+    def _record_audit(current_user, action, target_type, target_id=None, details=None):
+        audit_log_collection.insert_one({
+            "actor_id": str(current_user.get("_id", current_user.get("id", ""))),
+            "actor_name": current_user.get("name", current_user.get("email", "Unknown")),
+            "action": action,
+            "target_type": target_type,
+            "target_id": str(target_id) if target_id else None,
+            "details": details or {},
+            "created_at": datetime.now(timezone.utc),
+        })
+
+    @staticmethod
+    def _serialize_audit_log(log):
+        return {
+            "id": str(log["_id"]),
+            "actor_id": log.get("actor_id"),
+            "actor_name": log.get("actor_name", "Unknown"),
+            "action": log.get("action"),
+            "target_type": log.get("target_type"),
+            "target_id": log.get("target_id"),
+            "details": log.get("details", {}),
+            "created_at": log.get("created_at").isoformat()
+            if hasattr(log.get("created_at"), "isoformat") else log.get("created_at"),
+        }
 
     @staticmethod
     def _manager_can_review_owner(current_user, owner):
@@ -43,7 +70,7 @@ class AdminService:
         return users
 
     @staticmethod
-    def delete_user(id):
+    def delete_user(id, current_user):
 
         user = user_collection.find_one({"_id": ObjectId(id)})
         if not user:
@@ -82,10 +109,12 @@ class AdminService:
         if result.deleted_count == 0:
             return None
 
+        AdminService._record_audit(current_user, "delete_user", "user", id, {"name": user.get("name"), "email": user.get("email")})
+
         return {"message": "Employee and related expenses deleted successfully"}
 
     @staticmethod
-    def update_user_role(id, role):
+    def update_user_role(id, role, current_user):
 
         if role not in ["user", "manager"]:
             return None
@@ -115,6 +144,8 @@ class AdminService:
             {"_id": ObjectId(id)},
             {"$set": {"role": role}}
         )
+
+        AdminService._record_audit(current_user, "update_user_role", "user", id, {"from_role": user.get("role"), "to_role": role})
 
         return user_serializer(
             user_collection.find_one(
@@ -174,7 +205,7 @@ class AdminService:
         return requests
 
     @staticmethod
-    def approve_registration_request(id):
+    def approve_registration_request(id, current_user):
 
         request = registration_request_collection.find_one(
             {"_id": ObjectId(id)}
@@ -197,6 +228,8 @@ class AdminService:
             {"_id": ObjectId(id)}
         )
 
+        AdminService._record_audit(current_user, "approve_registration", "registration_request", id, {"email": request.get("email")})
+
         return user_serializer(
             user_collection.find_one(
                 {"_id": result.inserted_id}
@@ -204,11 +237,14 @@ class AdminService:
         )
 
     @staticmethod
-    def reject_registration_request(id):
+    def reject_registration_request(id, current_user):
 
-        registration_request_collection.delete_one(
+        result = registration_request_collection.delete_one(
             {"_id": ObjectId(id)}
         )
+
+        if result.deleted_count:
+            AdminService._record_audit(current_user, "reject_registration", "registration_request", id)
 
         return {"message": "Registration request rejected"}
 
@@ -294,6 +330,8 @@ class AdminService:
             }
         )
 
+        AdminService._record_audit(current_user, "approve_expense", "expense", id, {"amount": expense.get("amount"), "note": note})
+
         expense = expense_collection.find_one(
             {
                 "_id": ObjectId(id)
@@ -303,7 +341,7 @@ class AdminService:
         return expense_serializer(expense)
 
     @staticmethod
-    def delete_expense(id):
+    def delete_expense(id, current_user):
         expense = expense_collection.find_one({"_id": ObjectId(id)})
         if expense:
             remove_receipt(expense.get("receipt"))
@@ -315,6 +353,8 @@ class AdminService:
 
         if result.deleted_count == 0:
             return None
+
+        AdminService._record_audit(current_user, "delete_expense", "expense", id, {"title": expense.get("title") if expense else None})
 
         return {"message": "Expense deleted successfully"}
 
@@ -350,6 +390,8 @@ class AdminService:
             }
         )
 
+        AdminService._record_audit(current_user, "reject_expense", "expense", id, {"amount": expense.get("amount"), "note": note})
+
         expense = expense_collection.find_one(
             {
                 "_id": ObjectId(id)
@@ -367,3 +409,26 @@ class AdminService:
         if not AdminService._manager_can_review_owner(current_user, owner):
             return "unauthorized"
         return expense
+
+    @staticmethod
+    def get_audit_logs(*, action=None, actor_id=None, date_from=None, date_to=None, page=1, page_size=25):
+        query = {}
+        if action:
+            query["action"] = action
+        if actor_id:
+            query["actor_id"] = actor_id
+        if date_from or date_to:
+            query["created_at"] = {}
+            if date_from:
+                query["created_at"]["$gte"] = datetime.fromisoformat(date_from).replace(tzinfo=timezone.utc)
+            if date_to:
+                query["created_at"]["$lt"] = datetime.fromisoformat(date_to).replace(tzinfo=timezone.utc)
+
+        skip = (page - 1) * page_size
+        logs = audit_log_collection.find(query).sort("created_at", -1).skip(skip).limit(page_size)
+        return {
+            "items": [AdminService._serialize_audit_log(log) for log in logs],
+            "total": audit_log_collection.count_documents(query),
+            "page": page,
+            "page_size": page_size,
+        }

@@ -109,7 +109,7 @@ def get_users(current_user=Depends(admin_required)):
 @router.delete("/users/{id}")
 def delete_user(id: str, current_user=Depends(admin_required)):
 
-    result = AdminService.delete_user(id)
+    result = AdminService.delete_user(id, current_user)
 
     if not result:
         raise HTTPException(status_code=404, detail="Employee not found")
@@ -123,7 +123,7 @@ def update_user_role(
     current_user=Depends(admin_required)
 ):
 
-    result = AdminService.update_user_role(id, role)
+    result = AdminService.update_user_role(id, role, current_user)
 
     if not result:
         raise HTTPException(status_code=404, detail="Employee not found or invalid role")
@@ -216,7 +216,7 @@ def ocr_receipt(id: str, current_user=Depends(approval_required)):
 @router.delete("/expenses/{id}")
 def delete_expense(id: str, current_user=Depends(admin_required)):
 
-    result = AdminService.delete_expense(id)
+    result = AdminService.delete_expense(id, current_user)
 
     if not result:
         raise HTTPException(status_code=404, detail="Expense not found")
@@ -233,7 +233,7 @@ def registration_requests(current_user=Depends(admin_required)):
 @router.put("/registration-requests/{id}/approve")
 def approve_registration(id: str, current_user=Depends(admin_required)):
 
-    result = AdminService.approve_registration_request(id)
+    result = AdminService.approve_registration_request(id, current_user)
 
     if not result:
         raise HTTPException(status_code=404, detail="Registration request not found")
@@ -244,7 +244,27 @@ def approve_registration(id: str, current_user=Depends(admin_required)):
 @router.delete("/registration-requests/{id}")
 def reject_registration(id: str, current_user=Depends(admin_required)):
 
-    return AdminService.reject_registration_request(id)
+    return AdminService.reject_registration_request(id, current_user)
+
+
+@router.get("/audit-logs")
+def audit_logs(
+    current_user=Depends(admin_required),
+    action: Optional[str] = Query(None),
+    actor_id: Optional[str] = Query(None),
+    date_from: Optional[str] = Query(None),
+    date_to: Optional[str] = Query(None),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(25, ge=1, le=100),
+):
+    return AdminService.get_audit_logs(
+        action=action,
+        actor_id=actor_id,
+        date_from=date_from,
+        date_to=date_to,
+        page=page,
+        page_size=page_size,
+    )
 
 
 @router.get("/stats")

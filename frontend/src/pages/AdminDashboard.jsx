@@ -6,6 +6,7 @@ import ExpenseTable from "../components/ExpenseTable";
 import API from "../components/services/api";
 import RiskRadar from "../components/RiskRadar";
 import TeamManagement from "../components/TeamManagement";
+import AuditLog from "../components/AuditLog";
 
 const views = [
     { id: "home", label: "Home" },
@@ -13,6 +14,7 @@ const views = [
     { id: "employees", label: "Employees" },
     { id: "teams", label: "Teams" },
     { id: "expenses", label: "Expenses" },
+    { id: "audit-log", label: "Audit Log" },
 ];
 
 const AdminDashboard = () => {
@@ -94,6 +96,7 @@ const AdminDashboard = () => {
                                 {activeView === "employees" && "Search and manage employees and managers."}
                                 {activeView === "teams" && "Create teams and assign managers and employees."}
                                 {activeView === "expenses" && "Review, filter, and process submitted expenses."}
+                                {activeView === "audit-log" && "Review the history of administrative actions."}
                             </p>
                         </div>
                         {activeView === "employees" && (
@@ -167,6 +170,8 @@ const AdminDashboard = () => {
                             <ExpenseTable admin={true} refreshFlag={refreshFlag} onDelete={refreshData} onAction={refreshData} />
                         </section>
                     )}
+
+                    {activeView === "audit-log" && <AuditLog />}
                 </main>
             </div>
 
