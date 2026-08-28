@@ -14,12 +14,37 @@ const ACTIONS = [
 
 const formatDate = (value) => value ? new Date(value).toLocaleString() : "-";
 const escapeCsv = (value) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+const detailLabels = {
+    from_role: "From role",
+    to_role: "To role",
+    amount: "Amount",
+    note: "Review note",
+    name: "Name",
+    email: "Email",
+};
+
+const formatRole = (value) => value === "user" ? "Employee" : value?.charAt(0).toUpperCase() + value?.slice(1);
+const formatDetailValue = (key, value) => {
+    if (key.endsWith("role")) return formatRole(value);
+    if (key === "amount") return `Rs. ${Number(value || 0).toFixed(2)}`;
+    return value || "-";
+};
+const formatDetails = (details) => Object.entries(details || {})
+    .map(([key, value]) => `${detailLabels[key] || key}: ${formatDetailValue(key, value)}`)
+    .join(" | ");
 
 const AuditLog = () => {
     const [logs, setLogs] = useState({ items: [], total: 0, page: 1, page_size: 25 });
+    const [users, setUsers] = useState([]);
     const [filters, setFilters] = useState({ action: "", date_from: "", date_to: "" });
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
+
+    useEffect(() => {
+        API.get("/admin/users")
+            .then((response) => setUsers(response.data))
+            .catch((fetchError) => console.error("Could not load audit target users.", fetchError));
+    }, []);
 
     useEffect(() => {
         const timer = setTimeout(async () => {
@@ -49,7 +74,7 @@ const AuditLog = () => {
         const header = ["Date", "Actor", "Action", "Target", "Details"];
         const rows = logs.items.map((log) => [
             formatDate(log.created_at), log.actor_name, log.action, `${log.target_type}:${log.target_id || ""}`,
-            Object.entries(log.details || {}).map(([key, value]) => `${key}=${value}`).join("; "),
+            formatDetails(log.details),
         ]);
         const blob = new Blob([[header, ...rows].map((row) => row.map(escapeCsv).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
         const url = URL.createObjectURL(blob);
@@ -58,6 +83,14 @@ const AuditLog = () => {
         link.download = "expense-management-audit-log.csv";
         link.click();
         URL.revokeObjectURL(url);
+    };
+
+    const getTargetLabel = (log) => {
+        if (log.target_type === "user") {
+            const user = users.find((item) => item.id === log.target_id);
+            return user?.name || log.details?.name || log.details?.email || "Deleted user";
+        }
+        return `${log.target_type} ${log.target_id ? `#${log.target_id.slice(-6)}` : ""}`;
     };
 
     const pageCount = Math.max(1, Math.ceil(logs.total / logs.page_size));
@@ -92,7 +125,7 @@ const AuditLog = () => {
                 {loading ? <p className="p-8 text-center text-sm text-slate-500">Loading audit logs...</p> : error ? <p className="p-8 text-center text-sm text-red-600">{error}</p> : (
                     <table className="w-full min-w-[760px] text-left text-sm">
                         <thead className="bg-[#193680] text-xs uppercase tracking-wide text-white"><tr><th className="px-5 py-3">Date</th><th className="px-5 py-3">Actor</th><th className="px-5 py-3">Action</th><th className="px-5 py-3">Target</th><th className="px-5 py-3">Details</th></tr></thead>
-                        <tbody>{logs.items.length ? logs.items.map((log) => <tr key={log.id} className="border-t border-slate-100"><td className="px-5 py-4 text-slate-600">{formatDate(log.created_at)}</td><td className="px-5 py-4 font-semibold text-slate-800">{log.actor_name}</td><td className="px-5 py-4 text-slate-700">{ACTIONS.find(([value]) => value === log.action)?.[1] || log.action}</td><td className="px-5 py-4 text-slate-600">{log.target_type} {log.target_id ? `#${log.target_id.slice(-6)}` : ""}</td><td className="max-w-xs px-5 py-4 text-slate-600">{Object.entries(log.details || {}).map(([key, value]) => `${key}: ${value}`).join(" | ") || "-"}</td></tr>) : <tr><td colSpan="5" className="p-8 text-center text-slate-500">No audit events found.</td></tr>}</tbody>
+                        <tbody>{logs.items.length ? logs.items.map((log) => <tr key={log.id} className="border-t border-slate-100"><td className="px-5 py-4 text-slate-600">{formatDate(log.created_at)}</td><td className="px-5 py-4 font-semibold text-slate-800">{log.actor_name}</td><td className="px-5 py-4 text-slate-700">{ACTIONS.find(([value]) => value === log.action)?.[1] || log.action}</td><td className="px-5 py-4 font-medium text-slate-700">{getTargetLabel(log)}</td><td className="max-w-xs px-5 py-4 text-slate-600">{formatDetails(log.details) || "-"}</td></tr>) : <tr><td colSpan="5" className="p-8 text-center text-slate-500">No audit events found.</td></tr>}</tbody>
                     </table>
                 )}
             </div>
